@@ -214,11 +214,12 @@
   </collision>
 </link>
 
-<joint name="joint1" type="continuous">
+<joint name="joint1" type="revolute">
   <origin xyz="0.0 0.000529 0.111" rpy="0 0 0"/>
   <parent link="base_link"/>
   <child link="Link_1_1"/>
   <axis xyz="-0.0 0.0 1.0"/>
+  <limit lower="-3.14" upper="3.14" effort="100" velocity="1.5"/>
 </joint>
 
 <joint name="joint2" type="continuous">
@@ -226,6 +227,7 @@
   <parent link="Link_1_1"/>
   <child link="Link_2_1"/>
   <axis xyz="1.0 -0.0 -0.0"/>
+  <limit lower="-1.57" upper="1.57" effort="100" velocity="1.5"/>
 </joint>
 
 <joint name="joint3" type="continuous">
@@ -233,6 +235,7 @@
   <parent link="Link_2_1"/>
   <child link="Link_3_1"/>
   <axis xyz="-1.0 -0.0 0.0"/>
+  <limit lower="-2.0" upper="2.0" effort="100" velocity="1.5"/>
 </joint>
 
 <joint name="joint4" type="continuous">
@@ -240,6 +243,7 @@
   <parent link="Link_3_1"/>
   <child link="Link_4_1"/>
   <axis xyz="-0.0 1.0 -0.0"/>
+  <limit lower="-3.14" upper="3.14" effort="80" velocity="2.0"/>
 </joint>
 
 <joint name="joint5" type="continuous">
@@ -247,6 +251,7 @@
   <parent link="Link_4_1"/>
   <child link="Link_5_1"/>
   <axis xyz="-1.0 -0.0 0.0"/>
+  <limit lower="-2.0" upper="2.0" effort="80" velocity="2.0"/>
 </joint>
 
 <joint name="gripper" type="fixed">
@@ -260,6 +265,7 @@
   <parent link="Link_5_1"/>
   <child link="Link_6_1"/>
   <axis xyz="-0.0 1.0 -0.0"/>
+  <limit lower="-3.14" upper="3.14" effort="50" velocity="2.5"/>
 </joint>
 
 <joint name="jaw1" type="prismatic">

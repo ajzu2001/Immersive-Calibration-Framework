@@ -38,9 +38,13 @@ def generate_launch_description():
         output="screen"
     )
 
-    #to load the Arm Controller
+    #to activate Arm Controller
     load_arm_controller = ExecuteProcess(
-        cmd=["ros2", "control", "load_controller", "--set-state", "active", "arm_position_controller"],
+        cmd=[
+            "ros2", "control", "load_controller",
+            "--set-state", "active",
+            "arm_position_controller"
+        ],
         output="screen"
     )
 
@@ -58,7 +62,7 @@ def generate_launch_description():
             actions=[load_jsb]
         ),
         TimerAction(
-            period=10.0,
+            period=15.0,
             actions=[load_arm_controller]
         ),
     ])
