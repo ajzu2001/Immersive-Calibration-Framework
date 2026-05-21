@@ -11,7 +11,7 @@ def generate_launch_description():
     robot_description = {"robot_description": Command(["xacro ", xacro_file])}
 
     #for running the gazebo
-    gazebo = ExecuteProcess(cmd=["gz", "sim", "-r", "empty.sdf"], output="screen")
+    gazebo = ExecuteProcess(cmd=["gz", "sim", "-r", PathJoinSubstitution([pkg_share, "worlds", "arctos_empty.sdf"])], output="screen")
 
     #publisher for the robotic state
     rsp = Node(package="robot_state_publisher", executable="robot_state_publisher", parameters=[robot_description], output="screen")
