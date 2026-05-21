@@ -13,14 +13,14 @@
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -34,14 +34,14 @@
   <visual>
     <origin xyz="-0.0 -0.000529 -0.111" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_1_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-0.0 -0.000529 -0.111" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_1_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -55,14 +55,14 @@
   <visual>
     <origin xyz="0.05713 0.020356 -0.289378" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_2_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_2_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="0.05713 0.020356 -0.289378" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_2_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_2_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -76,14 +76,14 @@
   <visual>
     <origin xyz="-0.043 0.019045 -0.550385" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_3_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_3_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-0.043 0.019045 -0.550385" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_3_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_3_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -97,14 +97,14 @@
   <visual>
     <origin xyz="-1e-06 0.15874 -0.57209" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_4_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_4_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-1e-06 0.15874 -0.57209" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_4_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_4_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -118,14 +118,14 @@
   <visual>
     <origin xyz="0.039011 0.279927 -0.570316" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_5_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_5_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="0.039011 0.279927 -0.570316" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_5_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_5_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -139,14 +139,14 @@
   <visual>
     <origin xyz="-0.000193 0.319847 -0.570316" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Gripper_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Gripper_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-0.000193 0.319847 -0.570316" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Gripper_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Gripper_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -160,14 +160,14 @@
   <visual>
     <origin xyz="-0.000193 0.313762 -0.570316" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_6_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_6_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-0.000193 0.313762 -0.570316" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Link_6_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Link_6_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -181,14 +181,14 @@
   <visual>
     <origin xyz="-0.007934 0.359845 -0.599867" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Left_jaw_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Left_jaw_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-0.007934 0.359845 -0.599867" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Left_jaw_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Left_jaw_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -202,14 +202,14 @@
   <visual>
     <origin xyz="-0.007934 0.359845 -0.539867" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Right_jaw_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Right_jaw_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="paint_metallic_blue_2"/>
   </visual>
   <collision>
     <origin xyz="-0.007934 0.359845 -0.539867" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://arctos_description/meshes/Right_jaw_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find arctos_description)/meshes/Right_jaw_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -278,4 +278,52 @@
   <limit upper="0.015" lower="0.0" effort="100" velocity="100"/>
 </joint>
 
+<ros2_control name="ArctosSystem" type="system">
+  <hardware>
+    <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+  </hardware>
+
+  <joint name="joint1">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+
+  <joint name="joint2">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+
+  <joint name="joint3">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+
+  <joint name="joint4">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+
+  <joint name="joint5">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+
+  <joint name="joint6">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+</ros2_control>
+<gazebo>
+  <plugin
+    filename="libgz_ros2_control-system.so"
+    name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+    <parameters>$(find arctos_description)/config/arctos_controllers.yaml</parameters>
+  </plugin>
+</gazebo>
 </robot>
