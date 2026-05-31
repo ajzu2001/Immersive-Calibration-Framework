@@ -3,9 +3,13 @@
 <package format="3">
   <name>arctos_calibration</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Calibration pipeline for the Arctos digital twin framework</description>
   <maintainer email="ajzalbhavans@gmail.com">Ajzal Ashraf</maintainer>
   <license>TODO: License declaration</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>arctos_interfaces</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
