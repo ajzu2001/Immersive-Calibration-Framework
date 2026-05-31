@@ -1,7 +1,8 @@
-"""MetricsNode – computes evaluation metrics from twin sync error.
+"""MetricsNode – unified evaluation metrics from twin and calibration.
 
-Subscribes to /arctos/twin/sync_error, computes mean/max/RMS absolute
-joint error, publishes on /arctos/evaluation/metrics, and logs every second.
+Subscribes to /arctos/twin/sync_error and /arctos/calibration/state,
+computes a combined metrics vector, publishes on /arctos/evaluation/metrics,
+and logs every second.
 """
 
 import math
@@ -14,7 +15,7 @@ from std_msgs.msg import Float64MultiArray, MultiArrayDimension, MultiArrayLayou
 
 
 class MetricsNode(Node):
-    """Evaluation metrics publisher."""
+    """Unified evaluation metrics publisher."""
 
     def __init__(self):
         super().__init__('metrics_node')
@@ -26,18 +27,28 @@ class MetricsNode(Node):
         self.create_subscription(
             JointState, '/arctos/twin/sync_error', self._on_sync_error, 10
         )
+        self.create_subscription(
+            Float64MultiArray, '/arctos/calibration/state', self._on_cal_state, 10
+        )
 
-        # Latest computed metrics
+        # Twin sync metrics
         self._mean_abs: float = 0.0
         self._max_abs: float = 0.0
         self._rms: float = 0.0
-        self._has_data = False
+        self._has_twin = False
+
+        # Calibration state: [count, latest, best, avg]
+        self._cal_latest: float = 0.0
+        self._cal_best: float = 0.0
+        self._cal_avg: float = 0.0
+        self._has_cal = False
 
         # Log timer – 1 Hz
         self.create_timer(1.0, self._log_metrics)
 
         self.get_logger().info(
-            'MetricsNode started – listening on /arctos/twin/sync_error'
+            'MetricsNode started – listening on '
+            '/arctos/twin/sync_error, /arctos/calibration/state'
         )
 
     def _on_sync_error(self, msg: JointState):
@@ -50,26 +61,50 @@ class MetricsNode(Node):
         self._mean_abs = sum(abs_errors) / n
         self._max_abs = max(abs_errors)
         self._rms = math.sqrt(sum(e * e for e in abs_errors) / n)
-        self._has_data = True
+        self._has_twin = True
+        self._publish()
 
-        # Publish
+    def _on_cal_state(self, msg: Float64MultiArray):
+        if len(msg.data) < 4:
+            return
+        # msg.data = [count, latest_residual, best_residual, avg_residual]
+        self._cal_latest = msg.data[1]
+        self._cal_best = msg.data[2]
+        self._cal_avg = msg.data[3]
+        self._has_cal = True
+        self._publish()
+
+    def _publish(self):
         out = Float64MultiArray()
         out.layout = MultiArrayLayout(
-            dim=[MultiArrayDimension(label='metrics', size=3, stride=3)],
+            dim=[MultiArrayDimension(label='metrics', size=6, stride=6)],
             data_offset=0,
         )
-        # [mean_abs_error, max_abs_error, rms_error]
-        out.data = [self._mean_abs, self._max_abs, self._rms]
+        out.data = [
+            self._mean_abs,
+            self._max_abs,
+            self._rms,
+            self._cal_latest,
+            self._cal_best,
+            self._cal_avg,
+        ]
         self._pub.publish(out)
 
     def _log_metrics(self):
-        if not self._has_data:
+        if not (self._has_twin or self._has_cal):
             return
-        self.get_logger().info(
-            f'mean_abs={self._mean_abs:.6f}  '
-            f'max_abs={self._max_abs:.6f}  '
-            f'rms={self._rms:.6f}'
-        )
+        parts = []
+        if self._has_twin:
+            parts.append(
+                f'twin: mean={self._mean_abs:.6f} max={self._max_abs:.6f} '
+                f'rms={self._rms:.6f}'
+            )
+        if self._has_cal:
+            parts.append(
+                f'cal: latest={self._cal_latest:.6f} best={self._cal_best:.6f} '
+                f'avg={self._cal_avg:.6f}'
+            )
+        self.get_logger().info('  |  '.join(parts))
 
 
 def main(args=None):
@@ -81,7 +116,11 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        try:
+            if rclpy.ok():
+                rclpy.shutdown()
+        except rclpy._rclpy_pybind11.RCLError:
+            pass
 
 
 if __name__ == '__main__':
