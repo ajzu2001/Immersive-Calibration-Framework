@@ -1,0 +1,23 @@
+/**:
+    ros__parameters:
+        image_transport: raw
+        family: 36h11
+        size: 0.16                  # tag edge size in metres
+        max_hamming: 0              # max corrected bits (0 = strict)
+
+        detector:
+            threads: 1
+            decimate: 2.0           # quad detection resolution decimation
+            blur: 0.0
+            refine: true            # snap to strong gradients
+            sharpening: 0.25
+            debug: false
+
+        # Pose estimation method: "pnp" (default), "homography"
+        pose_estimation_method: "pnp"
+
+        # Known tags – add more entries as needed.
+        tag:
+            ids:    [0]
+            frames: [apriltag_target]
+            sizes:  [0.16]

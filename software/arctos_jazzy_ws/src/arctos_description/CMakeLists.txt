@@ -4,7 +4,7 @@ project(arctos_description)
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY urdf meshes launch rviz config worlds
+  DIRECTORY urdf meshes launch rviz config worlds models
   DESTINATION share/${PROJECT_NAME}
 )
 ament_package()

@@ -1,0 +1,125 @@
+<?xml version="1.0" ?>
+<!--
+  AprilTag test world for calibration perception testing.
+  Contains: ground plane, sun, a camera on a tripod stand, and
+  an AprilTag board (tag36h11 id 0) placed ~0.6 m in front of
+  the camera.  The robot is spawned separately via launch file.
+-->
+<sdf version="1.10">
+  <world name="apriltag_test_world">
+
+    <!-- ── Physics ──────────────────────────────────────────────── -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- ── System plugins ───────────────────────────────────────── -->
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <gravity>0 0 -9.81</gravity>
+
+    <!-- ── Lighting ─────────────────────────────────────────────── -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- ── Ground plane ─────────────────────────────────────────── -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane><normal>0 0 1</normal><size>10 10</size></plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane><normal>0 0 1</normal><size>10 10</size></plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ── Camera on a stand (eye-to-hand setup) ────────────────── -->
+    <!--
+      Positioned at x=0.6, y=0, z=0.5 looking back towards the
+      origin where the robot base and AprilTag board are placed.
+      The camera_link frame is published via static TF in the
+      launch file so we do not need to touch the robot URDF.
+    -->
+    <model name="calibration_camera">
+      <static>true</static>
+      <pose>0.6 0 0.5 0 0.4 3.14159</pose>
+      <!-- stand -->
+      <link name="stand_link">
+        <visual name="stand_visual">
+          <pose>0 0 -0.25 0 0 0</pose>
+          <geometry>
+            <cylinder><radius>0.015</radius><length>0.5</length></cylinder>
+          </geometry>
+          <material><ambient>0.3 0.3 0.3 1</ambient></material>
+        </visual>
+      </link>
+      <!-- camera body -->
+      <link name="camera_link">
+        <visual name="camera_visual">
+          <geometry>
+            <box><size>0.05 0.08 0.05</size></box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.15 0.15 0.15 1</diffuse>
+          </material>
+        </visual>
+        <sensor name="camera_sensor" type="camera">
+          <always_on>true</always_on>
+          <update_rate>15</update_rate>
+          <camera>
+            <horizontal_fov>1.0472</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip><near>0.05</near><far>10.0</far></clip>
+          </camera>
+          <topic>calibration_camera/image_raw</topic>
+        </sensor>
+      </link>
+      <joint name="stand_to_camera" type="fixed">
+        <parent>stand_link</parent>
+        <child>camera_link</child>
+      </joint>
+    </model>
+
+    <!-- ── AprilTag board ───────────────────────────────────────── -->
+    <!--
+      Placed at x=0.25, y=0, z=0.15, rotated to face the camera.
+      The board is 0.20 m × 0.20 m with tag36h11 id 0.
+    -->
+    <include>
+      <uri>model://apriltag_board</uri>
+      <name>apriltag_target</name>
+      <pose>0.25 0 0.15 0 -0.4 0</pose>
+    </include>
+
+  </world>
+</sdf>

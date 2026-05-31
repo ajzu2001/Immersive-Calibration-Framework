@@ -10,8 +10,14 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch',
-            ['launch/perception.launch.py']),
+        ('share/' + package_name + '/launch', [
+            'launch/perception.launch.py',
+            'launch/apriltag_perception.launch.py',
+            'launch/apriltag_simulation.launch.py',
+        ]),
+        ('share/' + package_name + '/config', [
+            'config/apriltag_params.yaml',
+        ]),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,6 +33,7 @@ setup(
     entry_points={
         'console_scripts': [
             'mock_tag_pose_node = arctos_perception.mock_tag_pose_node:main',
+            'tag_pose_node = arctos_perception.tag_pose_node:main',
         ],
     },
 )
