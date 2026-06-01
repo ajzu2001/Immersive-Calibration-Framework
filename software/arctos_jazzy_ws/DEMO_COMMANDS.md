@@ -1,81 +1,86 @@
 # Arctos Calibration Framework — Demo Commands
 
-## 1. Start Simulation (provides /joint_states)
+**Milestone:** dissertation-framework-v6
 
+## Prerequisites
+
+In every terminal, first run:
 ```bash
 source /opt/ros/jazzy/setup.bash
-source install/setup.bash
+source ~/Immersive-Calibration-Framework/software/arctos_jazzy_ws/install/setup.bash
+```
+
+## Terminal 1 — Gazebo Simulation
+
+```bash
 ros2 launch arctos_description simulation.launch.py
 ```
+Wait ~15 seconds for `arm_position_controller` to load.
 
-## 2. Start Full Software Bringup
-
-Open a **second terminal** and run one of:
+## Terminal 2 — Full Calibration Pipeline
 
 ```bash
-# Mock perception (fixed pose, no camera needed)
-ros2 launch arctos_bringup arctos_bringup.launch.py perception_mode:=mock
-
-# Simulated AprilTag detection (fake detections + TF, tests full tag pipeline)
-ros2 launch arctos_bringup arctos_bringup.launch.py perception_mode:=sim_detection
-
-# Real AprilTag detection (requires camera image topics)
-ros2 launch arctos_bringup arctos_bringup.launch.py perception_mode:=apriltag
+ros2 launch arctos_bringup arctos_bringup.launch.py \
+  perception_mode:=sim_detection enable_solver:=true
 ```
 
-For simulation clock:
+Launches: twin_monitor, sync_error, sim_apriltag_detection, tag_pose,
+calibration_observer, calibration_manager, calibration_solver, metrics.
+
+Other perception modes:
 ```bash
-ros2 launch arctos_bringup arctos_bringup.launch.py perception_mode:=mock use_sim_time:=true
+# Mock (fixed pose, no camera)
+ros2 launch arctos_bringup arctos_bringup.launch.py perception_mode:=mock enable_solver:=true
+
+# Real AprilTag (requires camera topics)
+ros2 launch arctos_bringup arctos_bringup.launch.py perception_mode:=apriltag enable_solver:=true
 ```
 
-## 3. Verify Topics
+## Terminal 3 — Joint Motion Demo
 
 ```bash
-# Perception output (pose fed to calibration)
-ros2 topic echo /arctos/perception/reference_frame_pose --once
+ros2 launch arctos_twin joint_motion_demo.launch.py
+```
+Drives joint1 with a sine wave (±0.3 rad, 0.2 Hz).
 
-# Perception quality (only in sim_detection/apriltag modes)
-ros2 topic echo /arctos/perception/quality --once
+## Terminal 4 — Topic Verification
 
-# Calibration residual per observation
-ros2 topic echo /arctos/calibration/result --once
-
-# Calibration running statistics [count, latest, best, avg]
-ros2 topic echo /arctos/calibration/state --once
-
-# Digital twin state (requires /joint_states)
-ros2 topic echo /arctos/twin/state --once
-
-# Twin sync error (requires /joint_states)
-ros2 topic echo /arctos/twin/sync_error --once
-
-# Aggregated evaluation [mean_tw, max_tw, rms_tw, latest_cal, best_cal, avg_cal]
+```bash
+ros2 topic list | grep arctos
+ros2 topic echo /arctos/calibration/solution --once
 ros2 topic echo /arctos/evaluation/metrics --once
 ```
 
-## 4. Expected Output
+## Expected Topics
 
-### perception/reference_frame_pose
-Position values near the configured pose. In sim_detection mode: `x≈0.35, y≈0.0, z≈-0.10` with small noise.
+| Topic | Type | What it proves |
+|-------|------|----------------|
+| `/joint_states` | JointState | Gazebo ros2_control bridge works |
+| `/arctos/twin/state` | TwinState | Digital twin receives and wraps joint data |
+| `/arctos/twin/sync_error` | JointState | Twin vs real error computation is live |
+| `/arctos/perception/reference_frame_pose` | PoseStamped | Perception source provides reference poses |
+| `/arctos/calibration/result` | CalibrationResult | Observer produces calibration observations |
+| `/arctos/calibration/state` | Float64MultiArray | Manager tracks running statistics |
+| `/arctos/calibration/solution` | CalibrationResult | Solver computes improvement estimates |
+| `/arctos/evaluation/metrics` | Float64MultiArray | Unified metrics from twin + calibration |
+| `/arm_position_controller/commands` | Float64MultiArray | Joint commands reach the controller |
 
-### calibration/state
+## Known Limitations
+
+- **AprilTag sim_detection** is a synthetic test bridge, not a real camera pipeline.
+- **Calibration solver** is an MVP residual tracker, not a final DH parameter optimiser.
+- **Real camera / real robot** integration is pending.
+- **VR package (arctos_vr)** is scaffold only — no nodes implemented.
+- **PerceptionQuality** message is defined but not published by any node yet.
+- **Sync error** is zero in passthrough mode since twin mirrors real joint states directly.
+
+## Helper Scripts
+
+```bash
+bash scripts/run_demo_stack.sh              # Print demo instructions
+bash scripts/run_demo_stack.sh --check      # Verify packages + interfaces
+bash scripts/run_demo_stack.sh --topics     # List active topics
+bash scripts/run_demo_stack.sh --commands   # Print copy-paste commands
+bash scripts/demo_check.sh                  # Full validation (12 checks)
+bash scripts/demo_check.sh --live           # + live topic verification
 ```
-data: [<count>, <latest_residual>, <best_residual>, <avg_residual>]
-```
-Residual is the Euclidean distance of the detected pose from origin. In sim_detection mode, expect `≈0.36 m`.
-
-### evaluation/metrics
-```
-data: [<mean_twin_err>, <max_twin_err>, <rms_twin_err>, <latest_cal>, <best_cal>, <avg_cal>]
-```
-Twin errors are 0.0 when no `/joint_states` source is running. Calibration values match `/arctos/calibration/state`.
-
-## 5. What Each Topic Proves
-
-- **reference_frame_pose** — Perception source is publishing pose data
-- **quality** — Detection confidence and tracking consistency are reported
-- **calibration/result** — Observer converts raw pose into calibration residual
-- **calibration/state** — Manager aggregates residuals and tracks improvement
-- **twin/state** — Robot joint states are mirrored into the digital twin
-- **twin/sync_error** — Per-joint error between real and twin is computed
-- **evaluation/metrics** — Both pipelines (twin + calibration) are fused into a single metric vector
