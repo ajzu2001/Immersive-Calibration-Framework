@@ -34,6 +34,7 @@ setup(
         'console_scripts': [
             'mock_tag_pose_node = arctos_perception.mock_tag_pose_node:main',
             'tag_pose_node = arctos_perception.tag_pose_node:main',
+            'sim_apriltag_detection_node = arctos_perception.sim_apriltag_detection_node:main',
         ],
     },
 )
