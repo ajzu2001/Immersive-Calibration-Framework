@@ -12,7 +12,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch',
             ['launch/twin_monitor.launch.py',
-             'launch/twin_sync.launch.py']),
+             'launch/twin_sync.launch.py',
+             'launch/joint_motion_demo.launch.py']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -29,6 +30,7 @@ setup(
         'console_scripts': [
             'twin_monitor_node = arctos_twin.twin_monitor_node:main',
             'sync_error_node = arctos_twin.sync_error_node:main',
+            'joint_command_demo_node = arctos_twin.joint_command_demo_node:main',
         ],
     },
 )
