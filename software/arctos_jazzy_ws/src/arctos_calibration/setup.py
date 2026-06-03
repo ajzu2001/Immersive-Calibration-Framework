@@ -30,6 +30,7 @@ setup(
             'calibration_observer_node = arctos_calibration.calibration_observer_node:main',
             'calibration_manager_node = arctos_calibration.calibration_manager_node:main',
             'calibration_solver_node = arctos_calibration.calibration_solver_node:main',
+            'calibration_correction_node = arctos_calibration.calibration_correction_node:main',
         ],
     },
 )

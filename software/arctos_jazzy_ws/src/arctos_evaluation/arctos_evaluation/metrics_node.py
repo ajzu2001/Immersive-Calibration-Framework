@@ -1,7 +1,9 @@
 """MetricsNode – unified evaluation metrics from twin and calibration.
 
-Subscribes to /arctos/twin/sync_error and /arctos/calibration/state,
-computes a combined metrics vector, publishes on /arctos/evaluation/metrics,
+Subscribes to /arctos/twin/sync_error, /arctos/calibration/state,
+and /arctos/calibration/correction,
+computes a combined metrics vector including correction magnitude,
+publishes on /arctos/evaluation/metrics,
 and logs every second.
 """
 
@@ -10,6 +12,7 @@ import math
 import rclpy
 from rclpy.node import Node
 
+from geometry_msgs.msg import Vector3Stamped
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension, MultiArrayLayout
 
@@ -30,6 +33,12 @@ class MetricsNode(Node):
         self.create_subscription(
             Float64MultiArray, '/arctos/calibration/state', self._on_cal_state, 10
         )
+        self.create_subscription(
+            Vector3Stamped,
+            '/arctos/calibration/correction',
+            self._on_correction,
+            10,
+        )
 
         # Twin sync metrics
         self._mean_abs: float = 0.0
@@ -43,12 +52,17 @@ class MetricsNode(Node):
         self._cal_avg: float = 0.0
         self._has_cal = False
 
+        # MVP correction output metric
+        self._correction_mag: float = 0.0
+        self._has_correction = False
+
         # Log timer – 1 Hz
         self.create_timer(1.0, self._log_metrics)
 
         self.get_logger().info(
-            'MetricsNode started – listening on '
-            '/arctos/twin/sync_error, /arctos/calibration/state'
+            'MetricsNode started - listening on '
+            '/arctos/twin/sync_error, /arctos/calibration/state, '
+            '/arctos/calibration/correction'
         )
 
     def _on_sync_error(self, msg: JointState):
@@ -74,10 +88,16 @@ class MetricsNode(Node):
         self._has_cal = True
         self._publish()
 
+    def _on_correction(self, msg: Vector3Stamped):
+        v = msg.vector
+        self._correction_mag = math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
+        self._has_correction = True
+        self._publish()
+
     def _publish(self):
         out = Float64MultiArray()
         out.layout = MultiArrayLayout(
-            dim=[MultiArrayDimension(label='metrics', size=6, stride=6)],
+            dim=[MultiArrayDimension(label='metrics', size=7, stride=7)],
             data_offset=0,
         )
         out.data = [
@@ -87,11 +107,12 @@ class MetricsNode(Node):
             self._cal_latest,
             self._cal_best,
             self._cal_avg,
+            self._correction_mag,
         ]
         self._pub.publish(out)
 
     def _log_metrics(self):
-        if not (self._has_twin or self._has_cal):
+        if not (self._has_twin or self._has_cal or self._has_correction):
             return
         parts = []
         if self._has_twin:
@@ -104,6 +125,8 @@ class MetricsNode(Node):
                 f'cal: latest={self._cal_latest:.6f} best={self._cal_best:.6f} '
                 f'avg={self._cal_avg:.6f}'
             )
+        if self._has_correction:
+            parts.append(f'correction: |mag|={self._correction_mag:.6f}')
         self.get_logger().info('  |  '.join(parts))
 
 

@@ -3,7 +3,7 @@
 Launches the full calibration pipeline:
   - Digital twin:   twin_monitor_node + sync_error_node
   - Perception:     mock_tag_pose  OR  sim_detection + tag_pose  OR  apriltag + tag_pose
-  - Calibration:    calibration_observer_node + calibration_manager_node
+  - Calibration:    calibration_observer_node + calibration_manager_node + correction output
   - Evaluation:     metrics_node
 
 Does NOT launch Gazebo or robot hardware.  Use simulation.launch.py or
@@ -42,10 +42,15 @@ def generate_launch_description():
         'enable_solver', default_value='true',
         description='Launch the MVP calibration solver node',
     )
+    enable_correction_arg = DeclareLaunchArgument(
+        'enable_correction', default_value='true',
+        description='Launch the MVP calibration correction output node',
+    )
 
     mode = LaunchConfiguration('perception_mode')
     sim_time = LaunchConfiguration('use_sim_time')
     enable_solver = LaunchConfiguration('enable_solver')
+    enable_correction = LaunchConfiguration('enable_correction')
     sim_time_param = {'use_sim_time': sim_time}
 
     # ── Digital Twin ─────────────────────────────────────────────────
@@ -137,6 +142,16 @@ def generate_launch_description():
         condition=IfCondition(enable_solver),
     )
 
+    # ── MVP correction output (optional) ────────────────────────────
+    calibration_correction = Node(
+        package='arctos_calibration',
+        executable='calibration_correction_node',
+        name='calibration_correction',
+        parameters=[sim_time_param],
+        output='screen',
+        condition=IfCondition(enable_correction),
+    )
+
     # ── Evaluation ───────────────────────────────────────────────────
     metrics = Node(
         package='arctos_evaluation',
@@ -150,6 +165,7 @@ def generate_launch_description():
         perception_mode_arg,
         use_sim_time_arg,
         enable_solver_arg,
+        enable_correction_arg,
 
         # Twin
         twin_monitor,
@@ -165,6 +181,7 @@ def generate_launch_description():
         calibration_observer,
         calibration_manager,
         calibration_solver,
+        calibration_correction,
 
         # Evaluation
         metrics,
