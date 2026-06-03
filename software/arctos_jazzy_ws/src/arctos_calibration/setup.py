@@ -31,6 +31,7 @@ setup(
             'calibration_manager_node = arctos_calibration.calibration_manager_node:main',
             'calibration_solver_node = arctos_calibration.calibration_solver_node:main',
             'calibration_correction_node = arctos_calibration.calibration_correction_node:main',
+            'correction_compensator_node = arctos_calibration.correction_compensator_node:main',
         ],
     },
 )

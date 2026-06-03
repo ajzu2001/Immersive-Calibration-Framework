@@ -1,10 +1,22 @@
 """MetricsNode – unified evaluation metrics from twin and calibration.
 
 Subscribes to /arctos/twin/sync_error, /arctos/calibration/state,
-and /arctos/calibration/correction,
-computes a combined metrics vector including correction magnitude,
+and /arctos/calibration/correction, plus compensated targets,
+computes a combined metrics vector including correction magnitude and raw-vs-compensated error,
 publishes on /arctos/evaluation/metrics,
 and logs every second.
+
+Metric ordering:
+  [0] twin mean abs sync error
+  [1] twin max abs sync error
+  [2] twin RMS sync error
+  [3] latest calibration residual
+  [4] best calibration residual
+  [5] average calibration residual
+  [6] correction vector magnitude
+  [7] raw pose error magnitude
+  [8] compensated pose error magnitude
+  [9] compensation improvement percent
 """
 
 import math
@@ -12,7 +24,7 @@ import math
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs.msg import Vector3Stamped
+from geometry_msgs.msg import PoseStamped, Vector3Stamped
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension, MultiArrayLayout
 
@@ -39,6 +51,18 @@ class MetricsNode(Node):
             self._on_correction,
             10,
         )
+        self.create_subscription(
+            PoseStamped,
+            '/arctos/perception/reference_frame_pose',
+            self._on_reference_pose,
+            10,
+        )
+        self.create_subscription(
+            PoseStamped,
+            '/arctos/calibration/compensated_target',
+            self._on_compensated_target,
+            10,
+        )
 
         # Twin sync metrics
         self._mean_abs: float = 0.0
@@ -56,13 +80,21 @@ class MetricsNode(Node):
         self._correction_mag: float = 0.0
         self._has_correction = False
 
+        # Raw-vs-compensated target metrics
+        self._raw_error: float = 0.0
+        self._compensated_error: float = 0.0
+        self._improvement_percent: float = 0.0
+        self._has_raw_pose = False
+        self._has_compensated_pose = False
+
         # Log timer – 1 Hz
         self.create_timer(1.0, self._log_metrics)
 
         self.get_logger().info(
             'MetricsNode started - listening on '
             '/arctos/twin/sync_error, /arctos/calibration/state, '
-            '/arctos/calibration/correction'
+            '/arctos/calibration/correction, '
+            '/arctos/calibration/compensated_target'
         )
 
     def _on_sync_error(self, msg: JointState):
@@ -94,10 +126,38 @@ class MetricsNode(Node):
         self._has_correction = True
         self._publish()
 
+    def _on_reference_pose(self, msg: PoseStamped):
+        self._raw_error = self._pose_error(msg)
+        self._has_raw_pose = True
+        self._update_improvement()
+        self._publish()
+
+    def _on_compensated_target(self, msg: PoseStamped):
+        self._compensated_error = self._pose_error(msg)
+        self._has_compensated_pose = True
+        self._update_improvement()
+        self._publish()
+
+    @staticmethod
+    def _pose_error(msg: PoseStamped) -> float:
+        p = msg.pose.position
+        return math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z)
+
+    def _update_improvement(self):
+        if not (self._has_raw_pose and self._has_compensated_pose):
+            self._improvement_percent = 0.0
+            return
+        if self._raw_error <= 1e-12:
+            self._improvement_percent = 0.0
+            return
+        self._improvement_percent = (
+            100.0 * (self._raw_error - self._compensated_error) / self._raw_error
+        )
+
     def _publish(self):
         out = Float64MultiArray()
         out.layout = MultiArrayLayout(
-            dim=[MultiArrayDimension(label='metrics', size=7, stride=7)],
+            dim=[MultiArrayDimension(label='metrics', size=10, stride=10)],
             data_offset=0,
         )
         out.data = [
@@ -108,11 +168,14 @@ class MetricsNode(Node):
             self._cal_best,
             self._cal_avg,
             self._correction_mag,
+            self._raw_error,
+            self._compensated_error,
+            self._improvement_percent,
         ]
         self._pub.publish(out)
 
     def _log_metrics(self):
-        if not (self._has_twin or self._has_cal or self._has_correction):
+        if not (self._has_twin or self._has_cal or self._has_correction or self._has_raw_pose or self._has_compensated_pose):
             return
         parts = []
         if self._has_twin:
@@ -127,6 +190,12 @@ class MetricsNode(Node):
             )
         if self._has_correction:
             parts.append(f'correction: |mag|={self._correction_mag:.6f}')
+        if self._has_raw_pose or self._has_compensated_pose:
+            parts.append(
+                f'target: raw={self._raw_error:.6f} '
+                f'compensated={self._compensated_error:.6f} '
+                f'improvement={self._improvement_percent:.2f}%'
+            )
         self.get_logger().info('  |  '.join(parts))
 
 
