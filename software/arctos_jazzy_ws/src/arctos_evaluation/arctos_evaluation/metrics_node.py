@@ -1,7 +1,7 @@
 """MetricsNode – unified evaluation metrics from twin and calibration.
 
 Subscribes to /arctos/twin/sync_error, /arctos/calibration/state,
-and /arctos/calibration/correction, plus compensated targets,
+and /arctos/calibration/correction, plus compensated targets and applied calibration models,
 computes a combined metrics vector including correction magnitude and raw-vs-compensated error,
 publishes on /arctos/evaluation/metrics,
 and logs every second.
@@ -17,6 +17,8 @@ Metric ordering:
   [7] raw pose error magnitude
   [8] compensated pose error magnitude
   [9] compensation improvement percent
+  [10] calibration confidence
+  [11] estimated model quality = confidence * (1 - normalized residual)
 """
 
 import math
@@ -24,6 +26,7 @@ import math
 import rclpy
 from rclpy.node import Node
 
+from arctos_interfaces.msg import CalibrationModel
 from geometry_msgs.msg import PoseStamped, Vector3Stamped
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension, MultiArrayLayout
@@ -63,6 +66,12 @@ class MetricsNode(Node):
             self._on_compensated_target,
             10,
         )
+        self.create_subscription(
+            CalibrationModel,
+            '/arctos/calibration/applied_model',
+            self._on_applied_model,
+            10,
+        )
 
         # Twin sync metrics
         self._mean_abs: float = 0.0
@@ -87,6 +96,11 @@ class MetricsNode(Node):
         self._has_raw_pose = False
         self._has_compensated_pose = False
 
+        # Applied calibration model metrics
+        self._calibration_confidence: float = 0.0
+        self._estimated_model_quality: float = 0.0
+        self._has_applied_model = False
+
         # Log timer – 1 Hz
         self.create_timer(1.0, self._log_metrics)
 
@@ -94,7 +108,8 @@ class MetricsNode(Node):
             'MetricsNode started - listening on '
             '/arctos/twin/sync_error, /arctos/calibration/state, '
             '/arctos/calibration/correction, '
-            '/arctos/calibration/compensated_target'
+            '/arctos/calibration/compensated_target, '
+            '/arctos/calibration/applied_model'
         )
 
     def _on_sync_error(self, msg: JointState):
@@ -136,6 +151,13 @@ class MetricsNode(Node):
         self._compensated_error = self._pose_error(msg)
         self._has_compensated_pose = True
         self._update_improvement()
+        self._update_model_quality()
+        self._publish()
+
+    def _on_applied_model(self, msg: CalibrationModel):
+        self._calibration_confidence = max(0.0, min(1.0, float(msg.confidence)))
+        self._has_applied_model = True
+        self._update_model_quality()
         self._publish()
 
     @staticmethod
@@ -154,10 +176,18 @@ class MetricsNode(Node):
             100.0 * (self._raw_error - self._compensated_error) / self._raw_error
         )
 
+    def _update_model_quality(self):
+        residual = self._compensated_error if self._has_compensated_pose else self._cal_latest
+        if self._has_raw_pose and self._raw_error > 1e-12:
+            normalized_residual = min(1.0, max(0.0, residual / self._raw_error))
+        else:
+            normalized_residual = min(1.0, max(0.0, residual / (1.0 + residual)))
+        self._estimated_model_quality = self._calibration_confidence * (1.0 - normalized_residual)
+
     def _publish(self):
         out = Float64MultiArray()
         out.layout = MultiArrayLayout(
-            dim=[MultiArrayDimension(label='metrics', size=10, stride=10)],
+            dim=[MultiArrayDimension(label='metrics', size=12, stride=12)],
             data_offset=0,
         )
         out.data = [
@@ -171,11 +201,13 @@ class MetricsNode(Node):
             self._raw_error,
             self._compensated_error,
             self._improvement_percent,
+            self._calibration_confidence,
+            self._estimated_model_quality,
         ]
         self._pub.publish(out)
 
     def _log_metrics(self):
-        if not (self._has_twin or self._has_cal or self._has_correction or self._has_raw_pose or self._has_compensated_pose):
+        if not (self._has_twin or self._has_cal or self._has_correction or self._has_raw_pose or self._has_compensated_pose or self._has_applied_model):
             return
         parts = []
         if self._has_twin:
@@ -195,6 +227,11 @@ class MetricsNode(Node):
                 f'target: raw={self._raw_error:.6f} '
                 f'compensated={self._compensated_error:.6f} '
                 f'improvement={self._improvement_percent:.2f}%'
+            )
+        if self._has_applied_model:
+            parts.append(
+                f'model: confidence={self._calibration_confidence:.3f} '
+                f'quality={self._estimated_model_quality:.3f}'
             )
         self.get_logger().info('  |  '.join(parts))
 

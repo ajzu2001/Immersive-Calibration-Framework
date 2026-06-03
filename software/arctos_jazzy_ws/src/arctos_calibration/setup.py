@@ -33,6 +33,7 @@ setup(
             'calibration_correction_node = arctos_calibration.calibration_correction_node:main',
             'correction_compensator_node = arctos_calibration.correction_compensator_node:main',
             'calibration_estimator_node = arctos_calibration.calibration_estimator_node:main',
+            'calibration_application_node = arctos_calibration.calibration_application_node:main',
         ],
     },
 )

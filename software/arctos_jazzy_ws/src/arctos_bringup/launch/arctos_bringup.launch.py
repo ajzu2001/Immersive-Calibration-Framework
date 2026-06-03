@@ -3,7 +3,7 @@
 Launches the full calibration pipeline:
   - Digital twin:   twin_monitor_node + sync_error_node
   - Perception:     mock_tag_pose  OR  sim_detection + tag_pose  OR  apriltag + tag_pose
-  - Calibration:    calibration_observer_node + calibration_manager_node + correction + compensation + model estimator
+  - Calibration:    calibration_observer_node + calibration_manager_node + correction + compensation + model estimator + application
   - Evaluation:     metrics_node + optional experiment_runner_node
   - VR bridge:      optional Unity/VR JSON state bridge
 
@@ -55,6 +55,10 @@ def generate_launch_description():
         'enable_calibration_estimator', default_value='true',
         description='Launch the Calibration Parameter Estimation MVP node',
     )
+    enable_calibration_application_arg = DeclareLaunchArgument(
+        'enable_calibration_application', default_value='true',
+        description='Launch the calibration application simulation layer',
+    )
     enable_experiment_runner_arg = DeclareLaunchArgument(
         'enable_experiment_runner', default_value='false',
         description='Record experiment metrics and generate CSV/plots',
@@ -70,6 +74,7 @@ def generate_launch_description():
     enable_correction = LaunchConfiguration('enable_correction')
     enable_compensation = LaunchConfiguration('enable_compensation')
     enable_calibration_estimator = LaunchConfiguration('enable_calibration_estimator')
+    enable_calibration_application = LaunchConfiguration('enable_calibration_application')
     enable_experiment_runner = LaunchConfiguration('enable_experiment_runner')
     enable_unity_bridge = LaunchConfiguration('enable_unity_bridge')
     sim_time_param = {'use_sim_time': sim_time}
@@ -193,6 +198,16 @@ def generate_launch_description():
         condition=IfCondition(enable_calibration_estimator),
     )
 
+    # ── Calibration application simulation (optional) ───────────────
+    calibration_application = Node(
+        package='arctos_calibration',
+        executable='calibration_application_node',
+        name='calibration_application',
+        parameters=[sim_time_param],
+        output='screen',
+        condition=IfCondition(enable_calibration_application),
+    )
+
     # ── Evaluation ───────────────────────────────────────────────────
     metrics = Node(
         package='arctos_evaluation',
@@ -229,6 +244,7 @@ def generate_launch_description():
         enable_correction_arg,
         enable_compensation_arg,
         enable_calibration_estimator_arg,
+        enable_calibration_application_arg,
         enable_experiment_runner_arg,
         enable_unity_bridge_arg,
 
@@ -249,6 +265,7 @@ def generate_launch_description():
         calibration_correction,
         correction_compensator,
         calibration_estimator,
+        calibration_application,
 
         # Evaluation
         metrics,
