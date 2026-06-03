@@ -4,7 +4,7 @@ Launches the full calibration pipeline:
   - Digital twin:   twin_monitor_node + sync_error_node
   - Perception:     mock_tag_pose  OR  sim_detection + tag_pose  OR  apriltag + tag_pose
   - Calibration:    calibration_observer_node + calibration_manager_node + correction + compensation
-  - Evaluation:     metrics_node
+  - Evaluation:     metrics_node + optional experiment_runner_node
 
 Does NOT launch Gazebo or robot hardware.  Use simulation.launch.py or
 display.launch.py separately to provide /joint_states.
@@ -50,12 +50,17 @@ def generate_launch_description():
         'enable_compensation', default_value='true',
         description='Launch the raw-vs-compensated target node',
     )
+    enable_experiment_runner_arg = DeclareLaunchArgument(
+        'enable_experiment_runner', default_value='false',
+        description='Record experiment metrics and generate CSV/plots',
+    )
 
     mode = LaunchConfiguration('perception_mode')
     sim_time = LaunchConfiguration('use_sim_time')
     enable_solver = LaunchConfiguration('enable_solver')
     enable_correction = LaunchConfiguration('enable_correction')
     enable_compensation = LaunchConfiguration('enable_compensation')
+    enable_experiment_runner = LaunchConfiguration('enable_experiment_runner')
     sim_time_param = {'use_sim_time': sim_time}
 
     # ── Digital Twin ─────────────────────────────────────────────────
@@ -176,12 +181,24 @@ def generate_launch_description():
         output='screen',
     )
 
+    experiment_runner = Node(
+        package='arctos_evaluation',
+        executable='experiment_runner_node',
+        name='experiment_runner',
+        parameters=[sim_time_param, {
+            'perception_mode': mode,
+        }],
+        output='screen',
+        condition=IfCondition(enable_experiment_runner),
+    )
+
     return LaunchDescription([
         perception_mode_arg,
         use_sim_time_arg,
         enable_solver_arg,
         enable_correction_arg,
         enable_compensation_arg,
+        enable_experiment_runner_arg,
 
         # Twin
         twin_monitor,
@@ -202,4 +219,5 @@ def generate_launch_description():
 
         # Evaluation
         metrics,
+        experiment_runner,
     ])

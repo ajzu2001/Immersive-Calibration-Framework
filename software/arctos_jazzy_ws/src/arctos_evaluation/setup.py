@@ -27,6 +27,8 @@ setup(
     entry_points={
         'console_scripts': [
             'metrics_node = arctos_evaluation.metrics_node:main',
+            'experiment_runner_node = arctos_evaluation.experiment_runner_node:main',
+            'plot_results = arctos_evaluation.plot_results:main',
         ],
     },
 )
