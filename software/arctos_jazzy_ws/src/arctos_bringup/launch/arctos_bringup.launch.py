@@ -1,7 +1,7 @@
 """Arctos Calibration Framework — integrated software bringup.
 
 Launches the full calibration pipeline:
-  - Digital twin:   twin_monitor_node + sync_error_node
+  - Digital twin:   twin_monitor_node + sync_error_node + optional hardware sensor fusion
   - Perception:     mock_tag_pose  OR  sim_detection + tag_pose  OR  apriltag + tag_pose
   - Calibration:    calibration_observer_node + calibration_manager_node + correction + compensation + model estimator + application
   - Evaluation:     metrics_node + optional experiment_runner_node
@@ -67,6 +67,14 @@ def generate_launch_description():
         'enable_unity_bridge', default_value='false',
         description='Launch the Unity/VR JSON state bridge',
     )
+    enable_mock_hardware_sensors_arg = DeclareLaunchArgument(
+        'enable_mock_hardware_sensors', default_value='false',
+        description='Launch mock ESP32/AS5600/limit/IMU hardware sensor publisher',
+    )
+    enable_sensor_fusion_arg = DeclareLaunchArgument(
+        'enable_sensor_fusion', default_value='false',
+        description='Launch MVP encoder-primary sensor fusion node',
+    )
 
     mode = LaunchConfiguration('perception_mode')
     sim_time = LaunchConfiguration('use_sim_time')
@@ -77,6 +85,8 @@ def generate_launch_description():
     enable_calibration_application = LaunchConfiguration('enable_calibration_application')
     enable_experiment_runner = LaunchConfiguration('enable_experiment_runner')
     enable_unity_bridge = LaunchConfiguration('enable_unity_bridge')
+    enable_mock_hardware_sensors = LaunchConfiguration('enable_mock_hardware_sensors')
+    enable_sensor_fusion = LaunchConfiguration('enable_sensor_fusion')
     sim_time_param = {'use_sim_time': sim_time}
 
     # ── Digital Twin ─────────────────────────────────────────────────
@@ -93,6 +103,23 @@ def generate_launch_description():
         name='sync_error',
         parameters=[sim_time_param],
         output='screen',
+    )
+
+    mock_hardware_sensors = Node(
+        package='arctos_twin',
+        executable='mock_hardware_sensor_node',
+        name='mock_hardware_sensors',
+        parameters=[sim_time_param],
+        output='screen',
+        condition=IfCondition(enable_mock_hardware_sensors),
+    )
+    sensor_fusion = Node(
+        package='arctos_twin',
+        executable='sensor_fusion_node',
+        name='sensor_fusion',
+        parameters=[sim_time_param],
+        output='screen',
+        condition=IfCondition(enable_sensor_fusion),
     )
 
     # ── Perception: mock ─────────────────────────────────────────────
@@ -247,10 +274,14 @@ def generate_launch_description():
         enable_calibration_application_arg,
         enable_experiment_runner_arg,
         enable_unity_bridge_arg,
+        enable_mock_hardware_sensors_arg,
+        enable_sensor_fusion_arg,
 
         # Twin
         twin_monitor,
         sync_error,
+        mock_hardware_sensors,
+        sensor_fusion,
 
         # Perception (only one mode activates)
         mock_perception,

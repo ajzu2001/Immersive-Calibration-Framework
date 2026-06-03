@@ -1,7 +1,7 @@
 """MetricsNode – unified evaluation metrics from twin and calibration.
 
 Subscribes to /arctos/twin/sync_error, /arctos/calibration/state,
-and /arctos/calibration/correction, plus compensated targets and applied calibration models,
+and /arctos/calibration/correction, plus compensated targets, applied models, and fused joint state,
 computes a combined metrics vector including correction magnitude and raw-vs-compensated error,
 publishes on /arctos/evaluation/metrics,
 and logs every second.
@@ -19,6 +19,7 @@ Metric ordering:
   [9] compensation improvement percent
   [10] calibration confidence
   [11] estimated model quality = confidence * (1 - normalized residual)
+  [12] encoder/sim consistency error from fused joint state vs /joint_states
 """
 
 import math
@@ -44,6 +45,13 @@ class MetricsNode(Node):
 
         self.create_subscription(
             JointState, '/arctos/twin/sync_error', self._on_sync_error, 10
+        )
+        self.create_subscription(JointState, '/joint_states', self._on_joint_state, 10)
+        self.create_subscription(
+            JointState,
+            '/arctos/twin/fused_joint_state',
+            self._on_fused_joint_state,
+            10,
         )
         self.create_subscription(
             Float64MultiArray, '/arctos/calibration/state', self._on_cal_state, 10
@@ -79,6 +87,11 @@ class MetricsNode(Node):
         self._rms: float = 0.0
         self._has_twin = False
 
+        # Encoder-primary fused state consistency metric
+        self._latest_joint_state: JointState | None = None
+        self._encoder_sim_consistency: float = 0.0
+        self._has_fused_state = False
+
         # Calibration state: [count, latest, best, avg]
         self._cal_latest: float = 0.0
         self._cal_best: float = 0.0
@@ -109,7 +122,8 @@ class MetricsNode(Node):
             '/arctos/twin/sync_error, /arctos/calibration/state, '
             '/arctos/calibration/correction, '
             '/arctos/calibration/compensated_target, '
-            '/arctos/calibration/applied_model'
+            '/arctos/calibration/applied_model, '
+            '/arctos/twin/fused_joint_state'
         )
 
     def _on_sync_error(self, msg: JointState):
@@ -123,6 +137,22 @@ class MetricsNode(Node):
         self._max_abs = max(abs_errors)
         self._rms = math.sqrt(sum(e * e for e in abs_errors) / n)
         self._has_twin = True
+        self._publish()
+
+    def _on_joint_state(self, msg: JointState):
+        self._latest_joint_state = msg
+
+    def _on_fused_joint_state(self, msg: JointState):
+        self._has_fused_state = True
+        if self._latest_joint_state is not None:
+            command_by_name = dict(zip(self._latest_joint_state.name, self._latest_joint_state.position))
+            diffs = [
+                abs(position - command_by_name[name])
+                for name, position in zip(msg.name, msg.position)
+                if name in command_by_name
+            ]
+            if diffs:
+                self._encoder_sim_consistency = sum(diffs) / len(diffs)
         self._publish()
 
     def _on_cal_state(self, msg: Float64MultiArray):
@@ -187,7 +217,7 @@ class MetricsNode(Node):
     def _publish(self):
         out = Float64MultiArray()
         out.layout = MultiArrayLayout(
-            dim=[MultiArrayDimension(label='metrics', size=12, stride=12)],
+            dim=[MultiArrayDimension(label='metrics', size=13, stride=13)],
             data_offset=0,
         )
         out.data = [
@@ -203,11 +233,12 @@ class MetricsNode(Node):
             self._improvement_percent,
             self._calibration_confidence,
             self._estimated_model_quality,
+            self._encoder_sim_consistency,
         ]
         self._pub.publish(out)
 
     def _log_metrics(self):
-        if not (self._has_twin or self._has_cal or self._has_correction or self._has_raw_pose or self._has_compensated_pose or self._has_applied_model):
+        if not (self._has_twin or self._has_cal or self._has_correction or self._has_raw_pose or self._has_compensated_pose or self._has_applied_model or self._has_fused_state):
             return
         parts = []
         if self._has_twin:
@@ -233,6 +264,8 @@ class MetricsNode(Node):
                 f'model: confidence={self._calibration_confidence:.3f} '
                 f'quality={self._estimated_model_quality:.3f}'
             )
+        if self._has_fused_state:
+            parts.append(f'encoder/sim consistency={self._encoder_sim_consistency:.6f}')
         self.get_logger().info('  |  '.join(parts))
 
 

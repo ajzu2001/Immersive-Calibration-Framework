@@ -16,6 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TwinState.msg"
   "msg/CalibrationResult.msg"
   "msg/CalibrationModel.msg"
+  "msg/HardwareJointState.msg"
   "msg/PerceptionQuality.msg"
   DEPENDENCIES
     std_msgs

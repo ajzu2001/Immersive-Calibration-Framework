@@ -31,6 +31,8 @@ setup(
             'twin_monitor_node = arctos_twin.twin_monitor_node:main',
             'sync_error_node = arctos_twin.sync_error_node:main',
             'joint_command_demo_node = arctos_twin.joint_command_demo_node:main',
+            'mock_hardware_sensor_node = arctos_twin.mock_hardware_sensor_node:main',
+            'sensor_fusion_node = arctos_twin.sensor_fusion_node:main',
         ],
     },
 )
