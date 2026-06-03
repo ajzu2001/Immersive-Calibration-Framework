@@ -5,6 +5,7 @@ Launches the full calibration pipeline:
   - Perception:     mock_tag_pose  OR  sim_detection + tag_pose  OR  apriltag + tag_pose
   - Calibration:    calibration_observer_node + calibration_manager_node + correction + compensation
   - Evaluation:     metrics_node + optional experiment_runner_node
+  - VR bridge:      optional Unity/VR JSON state bridge
 
 Does NOT launch Gazebo or robot hardware.  Use simulation.launch.py or
 display.launch.py separately to provide /joint_states.
@@ -54,6 +55,10 @@ def generate_launch_description():
         'enable_experiment_runner', default_value='false',
         description='Record experiment metrics and generate CSV/plots',
     )
+    enable_unity_bridge_arg = DeclareLaunchArgument(
+        'enable_unity_bridge', default_value='false',
+        description='Launch the Unity/VR JSON state bridge',
+    )
 
     mode = LaunchConfiguration('perception_mode')
     sim_time = LaunchConfiguration('use_sim_time')
@@ -61,6 +66,7 @@ def generate_launch_description():
     enable_correction = LaunchConfiguration('enable_correction')
     enable_compensation = LaunchConfiguration('enable_compensation')
     enable_experiment_runner = LaunchConfiguration('enable_experiment_runner')
+    enable_unity_bridge = LaunchConfiguration('enable_unity_bridge')
     sim_time_param = {'use_sim_time': sim_time}
 
     # ── Digital Twin ─────────────────────────────────────────────────
@@ -192,6 +198,15 @@ def generate_launch_description():
         condition=IfCondition(enable_experiment_runner),
     )
 
+    unity_bridge = Node(
+        package='arctos_vr',
+        executable='unity_bridge_node',
+        name='unity_bridge',
+        parameters=[sim_time_param],
+        output='screen',
+        condition=IfCondition(enable_unity_bridge),
+    )
+
     return LaunchDescription([
         perception_mode_arg,
         use_sim_time_arg,
@@ -199,6 +214,7 @@ def generate_launch_description():
         enable_correction_arg,
         enable_compensation_arg,
         enable_experiment_runner_arg,
+        enable_unity_bridge_arg,
 
         # Twin
         twin_monitor,
@@ -220,4 +236,7 @@ def generate_launch_description():
         # Evaluation
         metrics,
         experiment_runner,
+
+        # VR bridge
+        unity_bridge,
     ])
