@@ -1,7 +1,7 @@
 """Arctos Calibration Framework — integrated software bringup.
 
 Launches the full calibration pipeline:
-  - Digital twin:   twin_monitor_node + sync_error_node + optional hardware sensor fusion
+  - Digital twin:   twin_monitor_node + sync_error_node + optional ESP32 bridge + hardware sensor fusion
   - Perception:     mock_tag_pose  OR  sim_detection + tag_pose  OR  apriltag + tag_pose
   - Calibration:    calibration_observer_node + calibration_manager_node + correction + compensation + model estimator + application
   - Evaluation:     metrics_node + optional experiment_runner_node
@@ -75,6 +75,18 @@ def generate_launch_description():
         'enable_sensor_fusion', default_value='false',
         description='Launch MVP encoder-primary sensor fusion node',
     )
+    enable_esp32_bridge_arg = DeclareLaunchArgument(
+        'enable_esp32_bridge', default_value='false',
+        description='Launch ESP32 serial hardware bridge',
+    )
+    enable_mock_serial_arg = DeclareLaunchArgument(
+        'enable_mock_serial', default_value='false',
+        description='Launch mock ESP32 JSON serial packet generator',
+    )
+    esp32_serial_port_arg = DeclareLaunchArgument(
+        'esp32_serial_port', default_value='',
+        description='ESP32 USB serial port path, for example /dev/ttyUSB0',
+    )
 
     mode = LaunchConfiguration('perception_mode')
     sim_time = LaunchConfiguration('use_sim_time')
@@ -87,6 +99,9 @@ def generate_launch_description():
     enable_unity_bridge = LaunchConfiguration('enable_unity_bridge')
     enable_mock_hardware_sensors = LaunchConfiguration('enable_mock_hardware_sensors')
     enable_sensor_fusion = LaunchConfiguration('enable_sensor_fusion')
+    enable_esp32_bridge = LaunchConfiguration('enable_esp32_bridge')
+    enable_mock_serial = LaunchConfiguration('enable_mock_serial')
+    esp32_serial_port = LaunchConfiguration('esp32_serial_port')
     sim_time_param = {'use_sim_time': sim_time}
 
     # ── Digital Twin ─────────────────────────────────────────────────
@@ -120,6 +135,25 @@ def generate_launch_description():
         parameters=[sim_time_param],
         output='screen',
         condition=IfCondition(enable_sensor_fusion),
+    )
+
+    esp32_bridge = Node(
+        package='arctos_twin',
+        executable='esp32_bridge_node',
+        name='esp32_bridge',
+        parameters=[sim_time_param, {
+            'serial_port': esp32_serial_port,
+        }],
+        output='screen',
+        condition=IfCondition(enable_esp32_bridge),
+    )
+    mock_serial = Node(
+        package='arctos_twin',
+        executable='mock_serial_packet_node',
+        name='mock_serial_packet',
+        parameters=[sim_time_param],
+        output='screen',
+        condition=IfCondition(enable_mock_serial),
     )
 
     # ── Perception: mock ─────────────────────────────────────────────
@@ -276,12 +310,17 @@ def generate_launch_description():
         enable_unity_bridge_arg,
         enable_mock_hardware_sensors_arg,
         enable_sensor_fusion_arg,
+        enable_esp32_bridge_arg,
+        enable_mock_serial_arg,
+        esp32_serial_port_arg,
 
         # Twin
         twin_monitor,
         sync_error,
         mock_hardware_sensors,
         sensor_fusion,
+        esp32_bridge,
+        mock_serial,
 
         # Perception (only one mode activates)
         mock_perception,

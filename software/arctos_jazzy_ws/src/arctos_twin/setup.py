@@ -33,6 +33,8 @@ setup(
             'joint_command_demo_node = arctos_twin.joint_command_demo_node:main',
             'mock_hardware_sensor_node = arctos_twin.mock_hardware_sensor_node:main',
             'sensor_fusion_node = arctos_twin.sensor_fusion_node:main',
+            'esp32_bridge_node = arctos_twin.esp32_bridge_node:main',
+            'mock_serial_packet_node = arctos_twin.mock_serial_packet_node:main',
         ],
     },
 )
