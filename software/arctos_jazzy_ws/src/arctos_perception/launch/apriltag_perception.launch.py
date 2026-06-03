@@ -26,6 +26,9 @@ def generate_launch_description():
     reference_frame_arg = DeclareLaunchArgument(
         'reference_frame', default_value='camera_link',
         description='TF reference frame for published pose')
+    tag_frame_override_arg = DeclareLaunchArgument(
+        'tag_frame_override', default_value='apriltag_target',
+        description='TF frame published by apriltag_ros for the target tag')
 
     # Image topic remappings (caller provides the actual camera topics)
     image_topic_arg = DeclareLaunchArgument(
@@ -58,6 +61,7 @@ def generate_launch_description():
             'target_tag_id': LaunchConfiguration('target_tag_id'),
             'reference_frame': LaunchConfiguration('reference_frame'),
             'tag_family': '36h11',
+            'tag_frame_override': LaunchConfiguration('tag_frame_override'),
         }],
         output='screen',
     )
@@ -65,6 +69,7 @@ def generate_launch_description():
     return LaunchDescription([
         target_tag_id_arg,
         reference_frame_arg,
+        tag_frame_override_arg,
         image_topic_arg,
         camera_info_topic_arg,
         apriltag_node,
