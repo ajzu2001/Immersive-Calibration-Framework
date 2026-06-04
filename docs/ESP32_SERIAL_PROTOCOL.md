@@ -1,6 +1,6 @@
-# ESP32 Serial Protocol MVP
+# ESP32 Serial Protocol
 
-This document defines the MVP USB serial contract between the future ESP32
+This document defines the USB serial contract between the future ESP32
 sensor acquisition board and the ROS 2 Arctos hardware bridge.
 
 ## Transport
